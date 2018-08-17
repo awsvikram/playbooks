@@ -1,0 +1,64 @@
+- name: This playbook is to install logic monitor Any comments / suggestions mail to vikramv1989@gmail.com
+  hosts: logichosts
+  force_handlers: yes
+  ignore_errors: yes
+  tasks:
+   - name: Disbale the common rpms
+     shell:
+      cmd: subscription-manager repos --disable rhel-6-server-rh-common-rpms
+   - name: Installing snmp
+     yum:
+      name: net-snmp
+      state: present
+   - name: check for snmp
+     shell:
+      cmd: ls -l /etc/snmp/snmpd.conf
+     register: snmp
+   - name: Install snmp for RHEL 5
+     command: rpm -ivh {{ item }}
+     with_items:
+      - http://ftpurl/pub/rhel5/Server/lm_sensors-2.10.7-9.el5.x86_64.rpm
+      - http://ftpurl/pub/rhel5/Server/net-snmp-libs-5.3.2.2-17.el5.x86_64.rpm
+      - http://ftpurl/pub/rhel5/Server/net-snmp-utils-5.3.2.2-17.el5.x86_64.rpm
+      - http://ftpurl/pub/rhel5/Server/net-snmp-5.3.2.2-17.el5.x86_64.rpm
+     when: snmp.rc !=0 and ansible_distribution_major_version == "5"
+   - name: Install snmp for RHEL 6
+     command: rpm -ivh {{ item }}
+     with_items:
+      - https://rpmfind.net/linux/centos/6.9/os/x86_64/Packages/lm_sensors-libs-3.1.1-17.el6.x86_64.rpm
+      - http://ftpurl/pub/rhel6u5/Packages/lm_sensors-3.1.1-17.el6.x86_64.rpm
+      - http://ftpurl/pub/rhel6u5/Packages/net-snmp-libs-5.5-49.el6.x86_64.rpm
+      - http://ftpurl/pub/rhel6u5/Packages/net-snmp-utils-5.5-49.el6.x86_64.rpm
+      - http://ftpurl/pub/rhel6u5/Packages/net-snmp-5.5-49.el6.x86_64.rpm
+     when: snmp.rc !=0 and ansible_distribution_major_version == "6"
+
+   - name: Test the logic monitor line
+     shell:
+      cmd: cat /etc/snmp/snmpd.conf | grep -v "#" | grep -i logicmonitor
+     register: output
+   - name: Adding the necessary line if it doesnt exist
+     lineinfile:
+      dest: /etc/snmp/snmpd.conf
+      line: "rocommunity  Logicmonitor"
+     when: output.rc != 0
+   - name: Adding the necessary line if it doesnt exist
+     lineinfile:
+      dest: /etc/snmp/snmpd.conf
+      line: "rocommunity  L0g1c;M0n"
+     when: output.rc != 0
+   - name: Enable snmp service
+     service:
+      name: snmpd
+      enabled: yes
+   - name: Adding the firewall rules for RHEL 7
+     firewalld:
+      port: 161/udp
+      permanent: true
+      immediate: yes
+      state: enabled
+     when: ansible_distribution_major_version == "7"
+
+   - name: Restart snmpd
+     service:
+      name: snmpd
+      state: restarted
