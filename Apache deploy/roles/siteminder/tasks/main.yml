@@ -1,0 +1,14 @@
+- name: Place the httpd-siteminder file
+  template:
+   src: httpd-siteminder.conf
+   dest: /app/apache2/{{ app_name }}/{{ env }}/conf/extra/
+
+- name: Place the webagent file
+  template:
+   src: WebAgent.conf
+   dest:  /app/apache2/{{ app_name }}/{{ env }}/conf/
+
+- name: Place the Localconfig
+  template:
+   src: LocalConfig.conf
+   dest:  /app/apache2/{{ app_name }}/{{ env }}/conf/
