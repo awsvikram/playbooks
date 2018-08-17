@@ -1,0 +1,20 @@
+- name: Place the httpd-vhost.conf corresponding to proxy
+  template:
+   src: httpd-vhosts.conf
+   dest: /app/apache2/{{ app_name }}/{{ env }}/conf/extra/
+
+- name: Place the proxy-balancer config file
+  template:
+   src: proxy-balancer.conf
+   dest: /app/apache2/{{ app_name }}/{{ env }}/conf/extra/
+
+- name: Place the proxy-path conf file
+  template:
+   src: proxy-path.conf
+   dest: /app/apache2/{{ app_name }}/{{ env }}/conf/extra/
+
+
+- name: Place the proxy-reverse conf file
+  template:
+   src: proxy-reverse.conf
+   dest: /app/apache2/{{ app_name }}/{{ env }}/conf/extra/
