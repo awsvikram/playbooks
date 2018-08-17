@@ -1,0 +1,21 @@
+- name: Place the httpd-vhost.conf corresponding to modjk
+  template:
+   src: httpd-vhosts.conf
+   dest: /app/apache2/{{ app_name }}/{{ env }}/conf/extra/
+
+
+- name: Place the modjk file
+  template:
+   src: modjk.conf
+   dest: /app/apache2/{{ app_name }}/{{ env }}/conf/
+
+- name: Place the uriworkermap file
+  template:
+   src: uriworkermap.properties
+   dest: /app/apache2/{{ app_name }}/{{ env }}/conf/
+
+
+- name: Place the worker file
+  template:
+   src: workers.properties
+   dest: /app/apache2/{{ app_name }}/{{ env }}/conf/
