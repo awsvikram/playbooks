@@ -1,0 +1,108 @@
+- name: multipath / powermt validation
+  hosts: serverlist
+  ignore_errors: yes
+  tasks:
+    - name: Check if multipath installed
+      shell:
+       cmd: multipath -ll
+      register: mstatus
+    - name: Check if powerpath installed
+      shell:
+       cmd: powermt display dev=all
+      register: pstatus
+    - name: calling noluns handler
+      shell:
+       cmd: echo " "
+      notify: noluns
+      when: mstatus.rc != 0 and pstatus.rc != 0
+    - name: Scanning luns
+      shell:
+        cmd: echo "Scanning luns"
+      notify: scanluns
+      when: mstatus.rc  == 0 or pstatus.rc == 0
+  #  - name: force all notified handlers to run
+  #    meta: flush_handlers
+    - name: this is validating the failed paths for multipath enabled hosts
+      block:
+        - name: Validating
+          shell:
+            cmd: multipath -ll |egrep "failed|faulty"
+          register: failedmpath
+          when: pstatus.rc != 0
+        - name: Check for both HBAs for multipath enabled
+          shell:
+            cmd: multipath -l | grep -i sd | cut -d ':' -f1 | grep -o '[0-9]'|sort -nr  | uniq | wc -l
+          register: hba
+          when: pstatus.rc != 0
+        - name: Declaring the host is clean
+          shell:
+            cmd: echo ""
+          notify: clean_host
+          when: failedmpath.rc != 0 and hba.stdout >= 2
+        - name: Declaring the host is issue
+          shell:
+            cmd: echo ""
+          notify: issue_host
+          when: failedmpath.rc == 0 and  hba.stdout < 3
+      when: mstatus.rc == 0
+    - name: this is validating the failed paths for powerpath enabled hosts
+      block:
+        - name: Validating
+          shell:
+            cmd: powermt display dev=all | grep -i dead
+          register: failedppath
+          when: mstatus.rc != 0
+        - name: Check for both HBAs for poweRpath enabled
+          shell:
+            cmd:  powermt display dev=all | grep -i sd | awk '{print $1}' | sort -nr | uniq | wc -l
+          register: phba
+          when: mstatus.rc != 0
+        - name: Declaring the host is clean
+          shell:
+            cmd: echo ""
+          notify: clean_host
+          when: failedppath.rc != 0 and phba.stdout >= 2
+        - name: Declaring the host is issue
+          shell:
+            cmd: echo ""
+          notify: issue_host
+          when: failedppath.rc == 0 and  phba.stdout < 3
+      when: pstatus.rc == 0
+    - name: force all notified handlers to run
+      meta: flush_handlers
+    - name: mail_list
+      mail:
+       subject: Ansible Report - Servers with faulty paths
+       body: Dear Team, Kindly work on the attached report
+       from: root@server.com
+       to: sysadmin@org.com
+       attach: /root/path_validation/issuehost.txt
+      delegate_to: localhost
+      run_once: True
+
+
+  handlers:
+   - name: noluns
+     lineinfile:
+       path: /root/path_validation/noluns
+       line: "{{ ansible_fqdn  }}"
+       create: yes
+       state: present
+     delegate_to: localhost
+   - name: scanluns
+     shell:
+      cmd: for i in `ls /sys/class/scsi_host/`;do echo "- - -" > /sys/class/scsi_host/$i/scan;done
+   - name: clean_host
+     lineinfile:
+       path: /root/path_validation/cleanhost
+       line: "{{ ansible_fqdn  }}"
+       create: yes
+       state: present
+     delegate_to: localhost
+   - name: issue_host
+     lineinfile:
+       path: /root/path_validation/issuehost.txt
+       line: "{{ ansible_fqdn  }}"
+       create: yes
+       state: present
+     delegate_to: localhost
