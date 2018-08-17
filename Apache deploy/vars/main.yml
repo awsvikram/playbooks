@@ -1,0 +1,12 @@
+app_name: dummy
+env: dev
+ip_addr: x.x.x.x
+interface: eth0:30
+url_name: dummy.org.com
+# Application server IPs & Delegated path
+app_ip1: x.x.x.x
+app_ip2: x.x.x.x
+app_port: 8009
+user_id: appdummy
+# Siteminder webagent name
+agent_name: dummy
