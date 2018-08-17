@@ -1,0 +1,16 @@
+- hosts: all
+
+  roles:
+    - role: skeleton-apache
+      tags: main
+    - role: proxy
+      tags: proxy
+    - role: modjk
+      tags: modjk
+    - role: installmodule
+      tags: module
+    - role: siteminder
+      tags: siteminder
+
+  vars_files:
+    - "vars/main.yml"
