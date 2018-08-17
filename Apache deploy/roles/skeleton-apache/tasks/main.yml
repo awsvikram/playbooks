@@ -1,0 +1,36 @@
+- name: Creating the apache skeleton directory
+  file:
+   path: /app/apache2/{{ app_name }}/{{ env }}
+   state: directory
+
+- name: Copying directory inside the skeleton that are static e.g man,lib,htdocs,conf,extra etc
+  copy:
+   src: /app/static.zip
+   dest: /app/apache2/{{ app_name }}/{{ env }}
+
+- name: extracting the zip file created in the above step
+  unarchive:
+   dest: /app/apache2/{{ app_name }}/{{ env }}
+   src: /app/apache2/{{ app_name }}/{{ env }}/static.zip
+   copy: no
+
+- name: Removing the static.zip
+  file:
+   path: /app/apache2/{{ app_name }}/{{ env }}/static.zip
+   state: absent
+
+- name: Copying apachectl
+  template:
+   src: apachectl
+   dest:  /app/apache2/{{ app_name }}/{{ env }}/bin
+   mode: 0755
+
+- name: Copying envars
+  template:
+   src: envvars
+   dest: /app/apache2/{{ app_name }}/{{ env }}/bin
+
+- name: httpd.conf
+  template:
+   src: httpd.conf
+   dest: /app/apache2/{{ app_name }}/{{ env }}/conf
