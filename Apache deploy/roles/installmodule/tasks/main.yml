@@ -1,0 +1,26 @@
+- name: copy the module file
+  copy:
+   src: /app/tomcat-connectors-1.2.40-src.zip
+   dest: /tmp
+
+- name: extact the file
+  unarchive:
+   dest: /tmp
+   src: /tmp/tomcat-connectors-1.2.40-src.zip
+   creates: /tmp/tomcat-connectors-1.2.40-src
+   copy: no
+
+- name: Running the configure command
+  shell: ./configure  --with-apxs=/app/apache-2.2.31/bin/apxs
+  args:
+   chdir: /tmp/tomcat-connectors-1.2.40-src/native/
+
+- name: Running the make command
+  shell: make
+  args:
+   chdir: /tmp/tomcat-connectors-1.2.40-src/native/
+
+- name: Running make install
+  shell: make install
+  args:
+   chdir: /tmp/tomcat-connectors-1.2.40-src/native/
